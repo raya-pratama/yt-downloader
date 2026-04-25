@@ -1,39 +1,30 @@
 import streamlit as st
-import yt_dlp
+from pytube import YouTube
 import os
 
-st.set_page_config(page_title="YouTube Downloader HD", page_icon="🎥")
+st.title("🎥 YouTube Downloader (v2)")
 
-st.title("🎥 YouTube MP4 Downloader")
-st.write("Masukkan link video YouTube untuk mendownload dalam resolusi 1080p.")
+url = st.text_input("Masukkan link YouTube:")
 
-url = st.text_input("Paste link YouTube di sini:", placeholder="https://www.youtube.com/watch?v=...")
-
-if st.button("Generate Download Link"):
-    if url:
-        with st.spinner("Sedang memproses video... Mohon tunggu."):
-            try:
-                ydl_opts = {
-                    'format': 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]',
-                    'merge_output_format': 'mp4',
-                    'outtmpl': 'downloaded_video.mp4',
-                }
-
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    ydl.download([url])
+if st.button("Proses Video"):
+    try:
+        yt = YouTube(url)
+        # Mengambil resolusi 720p karena biasanya video & audio sudah jadi satu (Progressive)
+        # Ini menghindari error merging di server cloud
+        video = yt.streams.filter(progressive=True, file_extension='mp4', res="720p").first()
+        
+        if video:
+            with st.spinner("Downloading..."):
+                out_file = video.download()
+                base, ext = os.path.splitext(out_file)
+                new_file = base + '.mp4'
+                os.rename(out_file, new_file)
                 
-                with open("downloaded_video.mp4", "rb") as file:
-                    st.video("downloaded_video.mp4")
-                    st.download_button(
-                        label="Klik di sini untuk Simpan MP4",
-                        data=file,
-                        file_name="video_youtube_1080p.mp4",
-                        mime="video/mp4"
-                    )
+                with open(new_file, "rb") as f:
+                    st.download_button("Download Sekarang", f, file_name="video.mp4")
                 
-                os.remove("downloaded_video.mp4")
-
-            except Exception as e:
-                st.error(f"Terjadi kesalahan: {e}")
-    else:
-        st.warning("Silakan masukkan URL terlebih dahulu!")
+                os.remove(new_file)
+        else:
+            st.error("Resolusi 720p tidak tersedia untuk video ini.")
+    except Exception as e:
+        st.error(f"Error: {e}")
