@@ -13,17 +13,17 @@ if st.button("Generate Download Link"):
     if url:
         with st.spinner("Sedang memproses video... Mohon tunggu."):
             try:
-                # Setup opsi yt-dlp
-                ydl_opts = {
-                    'format': 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]',
-                    'merge_output_format': 'mp4',
-                    'outtmpl': 'downloaded_video.mp4', # Nama file sementara
-                }
-
+               ydl_opts = {
+                'format': 'bestvideo[height<=1080][ext=mp4]+bestaudio[ext=m4a]/best[height<=1080]',
+                'merge_output_format': 'mp4',
+                'outtmpl': 'downloaded_video.mp4',
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'quiet': True,
+                'no_warnings': True,
+            }
                 with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                     ydl.download([url])
-                
-                # Sediakan tombol download di UI
+
                 with open("downloaded_video.mp4", "rb") as file:
                     st.video("downloaded_video.mp4") # Preview video
                     st.download_button(
@@ -33,7 +33,6 @@ if st.button("Generate Download Link"):
                         mime="video/mp4"
                     )
                 
-                # Hapus file sementara setelah diproses agar tidak memenuhi storage server
                 os.remove("downloaded_video.mp4")
 
             except Exception as e:
